@@ -54,11 +54,22 @@ def authorize():
 
 @app.get('/health')
 def health_check():
+    from pymongo.errors import OperationFailure, ConnectionFailure, ConfigurationError
+    if not os.getenv('MONGODB_URI',''):
+        return respond({'status':'unavailable','database':'disconnected','reason':'missing_configuration'},503)
     try:
         client.admin.command('ping')
         return respond({'status':'ok','database':'connected'})
+    except OperationFailure as exc:
+        reason='authentication' if exc.code in (18,8000) else 'database_permission'
+    except ConfigurationError:
+        reason='connection_configuration'
+    except ConnectionFailure as exc:
+        reason='authentication' if 'authentication failed' in str(exc).lower() else 'network_or_dns'
     except Exception:
-        return respond({'status':'unavailable','database':'disconnected'},503)
+        reason='database_error'
+    # Return only a fixed category, never exception bodies, URIs or credentials.
+    return respond({'status':'unavailable','database':'disconnected','reason':reason},503)
 
 @app.route('/login',methods=['GET','POST'])
 def login():

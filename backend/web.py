@@ -60,7 +60,7 @@ def health_check():
 @app.route('/login',methods=['GET','POST'])
 def login():
     if request.method=='GET':
-        html=(ROOT/'frontend/login.html').read_text()
+        html=(ROOT/'frontend/login.html').read_text(encoding='utf-8')
         html=html.replace('LOGIN_MESSAGE','Incorrect username or password. Please try again.' if request.args.get('error') else 'Sign in to your Astra Desk research workspace.')
         return Response(html,mimetype='text/html',headers={'Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"})
     username=os.getenv('APP_USERNAME','admin');password=os.getenv('APP_PASSWORD','')

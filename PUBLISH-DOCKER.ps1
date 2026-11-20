@@ -2,6 +2,10 @@ param([string]$Version = '1.0.0')
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 if ($Version -notmatch '^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,100}$') { throw 'Invalid Docker version tag.' }
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    $dockerCandidates = @("$env:LOCALAPPDATA/Programs/DockerDesktop/resources/bin", "$env:ProgramFiles/Docker/Docker/resources/bin")
+    foreach ($dockerBin in $dockerCandidates) { if (Test-Path -LiteralPath "$dockerBin/docker.exe") { $env:PATH = "$dockerBin;$env:PATH"; break } }
+}
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw 'Install Docker Desktop with Linux containers first.' }
 docker info | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Docker engine unavailable.' }

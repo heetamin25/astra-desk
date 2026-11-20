@@ -41,6 +41,12 @@ docker compose -f docker-compose.yml -f docker-compose.pull.yml up -d --no-build
 
 ## Vercel and MongoDB Atlas
 
+### Prebuilt Docker image from GitHub
+
+The **Build and verify Docker package** workflow builds the app, starts it with MongoDB, checks health/login, and saves an `astra-desk-docker-image` artifact. Download it from the repository's Actions tab after a successful run. Extract it and run `PUSH-IMAGE.ps1` to load the included `astra-desk.tar` and push to your Docker Hub account. The artifact expires after seven days. This is separate from the source ZIP and contains no private `.env`.
+
+### Cloud environment
+
 Import your GitHub repo in Vercel with the Flask framework and root directory. Set these private Vercel environment variables before deployment:
 
 | Variable | Value |

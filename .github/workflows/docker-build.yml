@@ -1,0 +1,59 @@
+name: Build and verify Docker package
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '*.md']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create ephemeral test credentials
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import secrets
+          Path('.env').write_text('APP_USERNAME=admin\nAPP_PASSWORD='+secrets.token_hex(32)+'\nMONGO_PASSWORD='+secrets.token_hex(32)+'\n')
+          PY
+      - name: Validate and start full stack
+        run: |
+          docker compose config --quiet
+          docker compose up --build -d --wait --wait-timeout 180
+      - name: Verify database, login, and chatbot configuration
+        run: |
+          python - <<'PY'
+          import json, urllib.request, urllib.parse, http.cookiejar
+          from pathlib import Path
+          values=dict(line.split('=',1) for line in Path('.env').read_text().splitlines())
+          base='http://127.0.0.1:8019'
+          assert json.load(urllib.request.urlopen(base+'/health'))['database']=='connected'
+          jar=http.cookiejar.CookieJar()
+          client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+          data=urllib.parse.urlencode({'username':'admin','password':values['APP_PASSWORD'],'remember':'yes'}).encode()
+          with client.open(base+'/login',data) as r: assert b'Astra Desk' in r.read()
+          status=json.load(client.open(base+'/api/assistant/status'))
+          assert status['configured'] is False, 'No live API key should be in this build test'
+          print('MongoDB health, authenticated UI and explicit missing-key status verified.')
+          PY
+      - name: Save portable application image
+        run: |
+          mkdir -p docker-package
+          docker save -o docker-package/astra-desk.tar heetamin25/astra-desk:latest
+          cp docker-compose.yml docker-compose.pull.yml .env.example README.md PUSH-IMAGE.ps1 docker-package/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: astra-desk-docker-image
+          path: docker-package/
+          compression-level: 0
+          include-hidden-files: true
+          retention-days: 7
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose logs --tail 100
+      - name: Stop temporary test stack
+        if: always()
+        run: docker compose down

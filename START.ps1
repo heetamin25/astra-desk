@@ -1,5 +1,9 @@
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    $dockerCandidates = @("$env:LOCALAPPDATA/Programs/DockerDesktop/resources/bin", "$env:ProgramFiles/Docker/Docker/resources/bin")
+    foreach ($dockerBin in $dockerCandidates) { if (Test-Path -LiteralPath "$dockerBin/docker.exe") { $env:PATH = "$dockerBin;$env:PATH"; break } }
+}
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw 'Install Docker Desktop and start Linux containers, then retry.' }
 if (-not (Test-Path -LiteralPath '.env')) {
     function New-LocalSecret { $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); -join ($b | ForEach-Object { $_.ToString('x2') }) }

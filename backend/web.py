@@ -1,0 +1,142 @@
+"""Password-protected WSGI adapter for Vercel; local server remains unchanged."""
+import hmac, io, json, os, hashlib
+from urllib.parse import urlparse
+from flask import Flask, request, Response, redirect, stream_with_context
+from itsdangerous import URLSafeTimedSerializer, BadSignature
+from .db import db, ROOT, client
+from .server import Handler, encode
+from . import cloud, exercise9, coursework, chat
+
+app=Flask(__name__,static_folder=None)
+app.config['MAX_CONTENT_LENGTH']=1024*1024
+
+def respond(data,status=200):
+    return Response(json.dumps(data,default=encode),status=status,mimetype='application/json',headers={'Cache-Control':'no-store'})
+
+@app.errorhandler(413)
+def too_large(error):
+    return respond({'error':'Request too large'},413)
+
+SESSION_SECONDS=7*24*60*60
+COOKIE='signal_desk_session'
+def signer():
+    key=hashlib.sha256(('signal-desk-login:'+os.getenv('APP_PASSWORD','')).encode()).digest()
+    return URLSafeTimedSerializer(key,salt='remember-browser-v1')
+
+def session_valid(username):
+    try:return signer().loads(request.cookies.get(COOKIE,''),max_age=SESSION_SECONDS).get('user')==username
+    except (BadSignature,AttributeError):return False
+
+@app.before_request
+def authorize():
+    if request.path=='/health' and request.method=='GET':return
+    if request.path in ('/intel.css','/dashboard.css') and request.method=='GET':return
+    if request.path=='/api/cron':
+        secret=os.getenv('CRON_SECRET','')
+        if len(secret)>=32 and hmac.compare_digest(request.headers.get('Authorization',''),'Bearer '+secret):return
+        return respond({'error':'Unauthorized cron request'},401)
+    password=os.getenv('APP_PASSWORD','');username=os.getenv('APP_USERNAME','admin')
+    if len(password)<16:return respond({'error':'Set APP_PASSWORD to at least 16 characters in Vercel, then redeploy.'},503)
+    if request.method=='POST':
+        origin=request.headers.get('Origin')
+        if (origin and urlparse(origin).netloc!=request.host) or request.headers.get('Sec-Fetch-Site')=='cross-site':return respond({'error':'Cross-origin write blocked'},403)
+        limit=1024*1024 if request.path in ('/api/replica-lab/import','/api/exercise9/import','/api/coursework/import','/api/assistant/ingest') else 98304 if request.path=='/api/assistant/chat' else 10000
+        if request.content_length is not None and request.content_length>limit:return respond({'error':'Request too large'},413)
+    if request.path=='/login':return
+    auth=request.authorization
+    basic=bool(auth and auth.type=='basic' and hmac.compare_digest((auth.username or '').encode(),username.encode()) and hmac.compare_digest((auth.password or '').encode(),password.encode()))
+    if not basic and not session_valid(username):
+        if request.path.startswith('/api/') or request.method!='GET':return respond({'error':'Your session expired. Sign in again.','login':'/login'},401)
+        return redirect('/login',code=303)
+
+@app.get('/health')
+def health_check():
+    try:
+        client.admin.command('ping')
+        return respond({'status':'ok','database':'connected'})
+    except Exception:
+        return respond({'status':'unavailable','database':'disconnected'},503)
+
+@app.route('/login',methods=['GET','POST'])
+def login():
+    if request.method=='GET':
+        html=(ROOT/'frontend/login.html').read_text()
+        html=html.replace('LOGIN_MESSAGE','Incorrect username or password. Please try again.' if request.args.get('error') else 'Sign in to your Astra Desk research workspace.')
+        return Response(html,mimetype='text/html',headers={'Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"})
+    username=os.getenv('APP_USERNAME','admin');password=os.getenv('APP_PASSWORD','')
+    if not hmac.compare_digest(request.form.get('username','').encode(),username.encode()) or not hmac.compare_digest(request.form.get('password','').encode(),password.encode()):return redirect('/login?error=1',code=303)
+    response=redirect('/',code=303)
+    response.set_cookie(COOKIE,signer().dumps({'user':username}),max_age=SESSION_SECONDS if request.form.get('remember')=='yes' else None,secure=bool(os.getenv('VERCEL')) or request.is_secure,httponly=True,samesite='Lax',path='/')
+    response.headers['Cache-Control']='no-store'
+    return response
+
+@app.route('/logout',methods=['POST'])
+def logout():
+    response=redirect('/login',code=303);response.delete_cookie(COOKIE,path='/');return response
+
+class Bridge(Handler):
+    def __init__(self):
+        self.path=request.full_path.rstrip('?');self.headers=request.headers
+        self.rfile=io.BytesIO(request.get_data());self.response=None
+    def send_json(self,value,status=200):self.response=respond(value,status)
+
+@app.route('/',methods=['GET'])
+@app.route('/<path:path>',methods=['GET','POST'])
+def route(path=''):
+    if request.method=='GET' and path=='api/assistant/device-script':
+        return Response((ROOT/'tools/Collect-SignalDeskCheck.ps1').read_bytes(),mimetype='text/plain',headers={'Content-Disposition':'attachment; filename=Collect-SignalDeskCheck.ps1','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'})
+    if request.method=='GET' and path in ('','laboratory','intel.js','intel.css','dashboard.css','coursework.js','assistant.js','app.js','styles.css','replica-lab.js','exercise9.js'):
+        name=('intel.html' if not path else 'index.html' if path=='laboratory' else path);mime='text/html' if path in ('','laboratory') else 'application/javascript' if path.endswith('.js') else 'text/css'
+        return Response((ROOT/'frontend'/name).read_bytes(),mimetype=mime,headers={'Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'",'X-Content-Type-Options':'nosniff'})
+    if request.method=='GET' and path=='api/exercise9/kit':
+        return Response(exercise9.kit_bytes(),mimetype='application/zip',headers={'Content-Disposition':'attachment; filename=SignalDesk_Exercise9.zip','Cache-Control':'no-store'})
+    if request.method=='GET' and path=='api/coursework':return respond(coursework.catalog(db))
+    if not path.startswith('api/'):return respond({'error':'Not found'},404)
+    if not os.getenv('MONGODB_URI','').startswith(('mongodb://','mongodb+srv://')):return respond({'error':'Set the hosted MONGODB_URI environment variable and redeploy.'},503)
+    try:
+        if path.startswith('api/assistant/'):
+            action=path.removeprefix('api/assistant/')
+            owner=os.getenv('APP_USERNAME','admin')
+            if request.method=='GET':return respond(chat.get(db,owner,action,request.args))
+            body=request.get_json(silent=True)
+            if not isinstance(body,dict):return respond({'error':'JSON object required'},400)
+            if action=='chat':
+                def events():
+                    for event in chat.chat_stream(db,owner,body):yield json.dumps(event,default=encode)+'\n'
+                return Response(stream_with_context(events()),mimetype='application/x-ndjson',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
+            if action=='ingest':return respond(chat.ingest(db,owner,body))
+            if action=='import-feed':return respond(chat.import_feed(db,owner,body))
+            return respond({'error':'Unknown assistant action'},404)
+        cloud.bootstrap()
+        if path=='api/health':
+            client.admin.command('ping')
+            return respond({'ok':True,'database':db.name,'cloud':True})
+        if path=='api/processing':
+            if request.method=='POST':
+                body=request.get_json(silent=True)
+                if not isinstance(body,dict):return respond({'error':'JSON object required'},400)
+                return respond(cloud.control(body.get('action')))
+            cloud.kick_auto()
+            return respond(cloud.status())
+        if path=='api/cron':
+            result,status=cloud.enqueue_job('sync',{});return respond(result,status)
+        if path=='api/jobs' and request.method=='GET':return respond(cloud.list_jobs())
+        if path.startswith('api/jobs/') and request.method=='POST':
+            body=request.get_json(silent=True)
+            if not isinstance(body,dict):return respond({'error':'JSON object required'},400)
+            result,status=cloud.enqueue_job(path.split('/')[-1],body);return respond(result,status)
+        if path=='api/results':return respond({r['_id']:r['value'] for r in db.lab_results.find()})
+        if path=='api/metrics':return respond({'latest':{'available':False,'hitRatioPct':None,'occupancyPct':None,'reason':'Continuous WiredTiger monitoring runs in the local version. Hosted database tiers may restrict these counters.'},'history':[]})
+        if path=='api/capacity':return respond({'error':'Cache experiments run in the local version with your own MongoDB instance.'},400)
+        if path=='api/source-status':return respond({'lastSync':db.import_state.find_one({'_id':'last-sync'}),'cloud':True,'syncSeconds':86400})
+        bridge=Bridge()
+        if request.method=='POST':bridge.do_POST()
+        else:bridge.do_GET()
+        # Keep internal DB/connection details out of public error responses.
+        if bridge.response and bridge.response.status_code>=500:return respond({'error':'Backend operation failed. Check database access and Vercel logs.'},503)
+        return bridge.response or respond({'error':'Not found'},404)
+    except chat.ChatError as exc:return respond({'error':str(exc)},exc.status)
+    except (ValueError,TypeError) as exc:return respond({'error':str(exc)},400)
+    except Exception:
+        app.logger.exception('Signal Desk cloud operation failed')
+        return respond({'error':'Cloud backend unavailable. Check database connectivity and Vercel logs.'},503)

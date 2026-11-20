@@ -1,0 +1,4 @@
+# After publication: docker compose -f docker-compose.yml -f docker-compose.pull.yml up -d --no-build --pull always
+services:
+  app:
+    image: heetamin25/astra-desk:latest

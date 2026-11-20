@@ -1,0 +1,35 @@
+name: astra-desk
+services:
+  mongo:
+    image: mongo:8.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: astra
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Run START.ps1 first}
+    command: [mongod, --bind_ip_all, --wiredTigerCacheSizeGB, '0.4']
+    volumes: [astra-data:/data/db]
+    healthcheck:
+      test: [CMD-SHELL, 'mongosh --quiet -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand({ping:1}).ok"']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+  app:
+    image: heetamin25/astra-desk:latest
+    build: .
+    restart: unless-stopped
+    ports: ['127.0.0.1:8019:8000']
+    environment:
+      APP_USERNAME: ${APP_USERNAME:-admin}
+      APP_PASSWORD: ${APP_PASSWORD:?Run START.ps1 first}
+      MONGODB_URI: mongodb://astra:${MONGO_PASSWORD}@mongo:27017/?authSource=admin
+      MONGODB_DB: astra_desk
+      LLM_BACKEND: gemini
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
+      EMBEDDING_MODEL: gemini-embedding-001
+      EMBEDDING_DIMENSIONS: '3072'
+      CHAT_RETRIEVAL: exact
+    depends_on:
+      mongo: {condition: service_healthy}
+volumes:
+  astra-data:

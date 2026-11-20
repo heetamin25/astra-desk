@@ -1,0 +1,20 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+.vercel/
+node_modules/
+*.log
+*.zip
+results/*
+!results/.gitkeep
+data/pdf-cache/
+public/
+
+# Keep local measurements out of source control.
+labs/chapter09/results/
+# Public feed exports remain local; do not publish bulk data or credentials.
+data/live-threats/

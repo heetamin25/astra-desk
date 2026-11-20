@@ -11,6 +11,7 @@ class CourseworkTests(unittest.TestCase):
   rows=c.catalog(self.db)['items'];self.assertEqual(len(rows),8)
   self.assertEqual(len({r['dockerUrl'] for r in rows}),8)
   self.assertTrue(all(r['evidence'] is None and not r['publicationVerified'] for r in rows))
+  self.assertTrue(all(r['status']=='Not yet measured' for r in rows))
   self.assertTrue(rows[2]['dockerUrl'].endswith('/mongodb-exercise13'))
  def test_import_persists_and_replaces_only_selected_experiment(self):
   c.import_evidence(self.db,self.payload());c.import_evidence(self.db,self.payload(12));c.import_evidence(self.db,self.payload())

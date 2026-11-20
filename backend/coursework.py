@@ -24,14 +24,14 @@ def catalog(db):
   item={'number':n,'title':title,'category':category,'description':description,'outcomes':outcomes,
         'dockerUrl':'https://hub.docker.com/r/solankyyy/'+REPOS[n],
         'referenceUrl':'https://github.com/sujeetjagtap/NoSQL-Databases-using-MongoDB/tree/main/chapter-'+str(n),
-        'status':'Completion reported','statusBasis':'Student reports completion; run evidence has not yet been imported here.',
+        'status':'Not yet measured','statusBasis':'No run evidence has been imported for this project. The Docker link belongs to the upstream reference author.',
         'publicationVerified':False,'evidence':None}
   if n in saved:
    row=saved[n];item['evidence']={k:v for k,v in row.items() if k!='_id'}
    item['status']='Imported: reports pass' if row['allReportedPass'] else 'Evidence imported'
    item['statusBasis']='Imported JSON is a student-provided record, not an independent rerun.'
   items.append(item)
- return {'items':items,'storageAvailable':available,'basis':'Completion is student-reported until evidence is imported. Docker links are repository targets, not live registry verification.'}
+ return {'items':items,'storageAvailable':available,'basis':'Experiments start without measured evidence. Docker links are upstream reference repositories, not images published by this project.'}
 
 def inspect(value,depth=0):
  if depth>35:raise ValueError('JSON nesting is too deep')

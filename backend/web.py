@@ -36,7 +36,10 @@ def authorize():
         if len(secret)>=32 and hmac.compare_digest(request.headers.get('Authorization',''),'Bearer '+secret):return
         return respond({'error':'Unauthorized cron request'},401)
     password=os.getenv('APP_PASSWORD','');username=os.getenv('APP_USERNAME','admin')
-    if len(password)<16:return respond({'error':'Set APP_PASSWORD to at least 16 characters in Vercel, then redeploy.'},503)
+    if len(password)<16:
+        if request.method=='GET' and request.path=='/login':return
+        if request.method=='GET' and not request.path.startswith('/api/'):return redirect('/login',code=303)
+        return respond({'error':'Workspace setup is pending. Configure the application password before signing in.'},503)
     if request.method=='POST':
         origin=request.headers.get('Origin')
         if (origin and urlparse(origin).netloc!=request.host) or request.headers.get('Sec-Fetch-Site')=='cross-site':return respond({'error':'Cross-origin write blocked'},403)
@@ -62,6 +65,9 @@ def login():
     if request.method=='GET':
         html=(ROOT/'frontend/login.html').read_text(encoding='utf-8')
         html=html.replace('LOGIN_MESSAGE','Incorrect username or password. Please try again.' if request.args.get('error') else 'Sign in to your Astra Desk research workspace.')
+        if len(os.getenv('APP_PASSWORD',''))<16:
+            html=html.replace('Sign in to your Astra Desk research workspace.','Your workspace is being prepared. Sign-in will be available once setup is complete.')
+            html=html.replace('type="submit"','type="submit" disabled')
         return Response(html,mimetype='text/html',headers={'Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"})
     username=os.getenv('APP_USERNAME','admin');password=os.getenv('APP_PASSWORD','')
     if not hmac.compare_digest(request.form.get('username','').encode(),username.encode()) or not hmac.compare_digest(request.form.get('password','').encode(),password.encode()):return redirect('/login?error=1',code=303)

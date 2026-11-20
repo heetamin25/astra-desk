@@ -32,3 +32,11 @@ class LoginTests(unittest.TestCase):
  def test_password_rotation_invalidates_cookie(self):
   self.sign_in()
   with patch.dict(os.environ,{'APP_PASSWORD':'replacement-password-long-enough'}):self.assertEqual(self.api.get('/').status_code,303)
+ def test_unconfigured_workspace_renders_login_but_blocks_access(self):
+  with patch.dict(os.environ,{'APP_PASSWORD':''}):
+   page=self.api.get('/login')
+   self.assertEqual(page.status_code,200)
+   self.assertIn(b'setup is complete',page.data)
+   self.assertIn(b'type="submit" disabled',page.data)
+   self.assertEqual(self.api.get('/api/coursework').status_code,503)
+   self.assertEqual(self.sign_in().status_code,503)

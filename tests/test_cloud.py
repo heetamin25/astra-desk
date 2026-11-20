@@ -52,7 +52,9 @@ class CloudTests(unittest.TestCase):
         self.assertEqual(self.api.get('/').status_code,303)
         self.assertEqual(self.api.get('/api/reports').status_code,401)
         self.assertEqual(self.api.get('/',headers=self.auth).status_code,200)
-        with patch.dict(os.environ,{'APP_PASSWORD':''}):self.assertEqual(self.api.get('/').status_code,503)
+        with patch.dict(os.environ,{'APP_PASSWORD':''}):
+            self.assertEqual(self.api.get('/').status_code,303)
+            self.assertEqual(self.api.get('/api/coursework').status_code,503)
     def test_cross_origin_and_local_only_jobs_blocked(self):
         r=self.api.post('/api/processing',json={'action':'start'},headers={**self.auth,'Origin':'https://unrelated.invalid'})
         self.assertEqual(r.status_code,403)

@@ -31,7 +31,7 @@ Docker Hub stores **built images**, not a source ZIP uploaded through its websit
 powershell -NoProfile -ExecutionPolicy Bypass -File .\PUBLISH-DOCKER.ps1 -Version 1.0.0
 ```
 
-Enter your Docker Hub access token only into Docker's login prompt. The script builds and pushes `heetamin25/mongodb-lab18:1.0.0` and `latest`. Create that Docker Hub repository with your chosen visibility if needed. The app image contains the frontend, backend, labs and bundled public data. MongoDB runs from official `mongo:8.0` with its own volume. Never include private database exports, keys or `.env` in an image.
+Enter your Docker Hub access token only into Docker's login prompt. The script builds and pushes `heetamin25/mongodb-lab18:2.0.0` and `latest`. Create that Docker Hub repository with your chosen visibility if needed. The app image contains the frontend, backend, labs and bundled public data. MongoDB runs from official `mongo:8.0` with its own volume. Never include private database exports, keys or `.env` in an image.
 
 After publishing, another computer with the Compose files and its own `.env` runs:
 

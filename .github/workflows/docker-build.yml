@@ -34,7 +34,7 @@ jobs:
           jar=http.cookiejar.CookieJar()
           client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
           data=urllib.parse.urlencode({'username':'admin','password':values['APP_PASSWORD'],'remember':'yes'}).encode()
-          with client.open(base+'/login',data) as r: assert b'Astra Desk' in r.read()
+          with client.open(base+'/login',data) as r: assert b'Threatloom' in r.read()
           status=json.load(client.open(base+'/api/assistant/status'))
           assert status['configured'] is False, 'No live API key should be in this build test'
           print('MongoDB health, authenticated UI and explicit missing-key status verified.')

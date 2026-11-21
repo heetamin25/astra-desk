@@ -1,4 +1,4 @@
-param([string]$Version = '1.0.0')
+param([string]$Version = '2.0.0')
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 if ($Version -notmatch '^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,100}$') { throw 'Invalid Docker version tag.' }

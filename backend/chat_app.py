@@ -16,7 +16,7 @@ async def lifespan(app):
     try:yield
     finally:client.close()
 
-app=FastAPI(title='Signal Desk · Appendix A',lifespan=lifespan)
+app=FastAPI(title='Threatloom · Research API',lifespan=lifespan)
 
 @app.middleware('http')
 async def api_bounds(request,call_next):

@@ -9,7 +9,7 @@
 
 .device-check{margin:20px 0;padding:16px;border:1px solid #ced9ec;border-radius:12px}.device-check summary{cursor:pointer;font-weight:700}.device-check p{line-height:1.6}.device-check pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:230px;overflow:auto}.device-check input[type=file]{max-width:100%}.device-consent{display:flex;gap:10px;align-items:flex-start;margin:16px 0}.device-consent input{flex:0 0 auto}.device-assessment{padding:14px;background:#f3f7ff;border:1px solid #ced9ec;border-radius:10px}.device-assessment article{border-top:1px solid #ced9ec;padding-top:12px;margin-top:12px}
 
-/* Astra Desk: midnight charcoal, mint, and warm amber. */
+/* Threatloom: midnight charcoal, mint, and warm amber. */
 :root,body,body.light{color-scheme:dark;--bg:#101516;--panel:#192223;--text:#edf5f0;--muted:#a5b9b2;--line:#344744;--accent:#a9edcf;--input:#131c1d}
 body{font-size:16px;background:radial-gradient(ellipse at 90% 0,#20352e70,transparent 52%),var(--bg)}
 body>aside{background:#121b1c;border-right:1px solid var(--line);padding-top:34px}

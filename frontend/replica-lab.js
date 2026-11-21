@@ -56,7 +56,7 @@
       const data = await api('/api/replica-lab');
       activities = data.activities;
       await select(selected || activities.find(a => a.run)?.id || activities[0].id);
-    } catch (e) { message(e.message, true); el('replica-result').textContent = 'Saved results are unavailable. Check your Astra Desk database connection and try Reload saved results.'; }
+    } catch (e) { message(e.message, true); el('replica-result').textContent = 'Saved results are unavailable. Check your Threatloom database connection and try Reload saved results.'; }
   };
   el('replica-refresh').onclick = () => window.replicaLabLoad();
   el('replica-activities').onclick = e => { const b = e.target.closest('[data-replica-id]'); if (b) select(b.dataset.replicaId); };

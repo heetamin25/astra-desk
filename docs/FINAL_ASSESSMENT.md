@@ -1,4 +1,4 @@
-# Astra Desk final assessment
+# Threatloom final assessment
 
 Adapted from SOLANKYYY/signal-desk. See UPSTREAM.md for source attribution.
 

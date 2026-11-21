@@ -38,7 +38,7 @@ class CloudTests(unittest.TestCase):
         response=self.api.get('/api/intel/summary',headers=self.auth)
         self.assertEqual(response.status_code,200)
         self.assertEqual(response.json['observations'],0)
-        self.assertIn(b'Your next insight starts here.',self.api.get('/',headers=self.auth).data)
+        self.assertIn(b'Pull the threads together.',self.api.get('/',headers=self.auth).data)
         self.assertIn(b'Replica Set Lab',self.api.get('/laboratory',headers=self.auth).data)
         self.assertEqual(self.api.get('/intel.js',headers=self.auth).status_code,200)
         self.assertEqual(self.api.get('/intel.css',headers=self.auth).status_code,200)

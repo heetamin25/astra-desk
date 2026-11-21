@@ -1,4 +1,4 @@
-# Astra Desk
+# Threatloom
 
 A charcoal-and-mint intelligence and MongoDB research workspace adapted from [Signal Desk](https://github.com/SOLANKYYY/signal-desk). See [source attribution](UPSTREAM.md).
 
@@ -19,7 +19,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\START.ps1
 
 The first run creates private `.env` credentials. Add your Google AI Studio key to `GEMINI_API_KEY` there and run `docker compose up -d` to apply it. Open http://localhost:8019. Username: `admin`. Password: the generated `APP_PASSWORD` value in `.env`.
 
-Open **Ask Astra Desk**, import a public report or paste an advisory excerpt with its original HTTPS URL, then ask a question. Generation needs a valid Gemini key, model access and quota. The app shows configuration/provider failures explicitly.
+Open **Ask Threatloom**, import a public report or paste an advisory excerpt with its original HTTPS URL, then ask a question. Generation needs a valid Gemini key, model access and quota. The app shows configuration/provider failures explicitly.
 
 MongoDB data persists in the `astra-data` volume. `docker compose down` preserves it; `down -v` deletes it. MongoDB is only reachable inside the Compose network, with no host port published.
 

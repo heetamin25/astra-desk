@@ -54,7 +54,7 @@
 /* Blue-and-white laboratory navigation matches the platform. */
 .sidebar{background:#fff;color:#172b4d;border-right:1px solid #dfe7f2}.sidebar .brand{color:#172b4d}.sidebar .brandmark{background:#195bda;color:#fff}.sidebar nav button{color:#62748e}.sidebar nav button.active{background:#eaf2ff;color:#175cda}.sidebar nav button:hover{background:#f2f6fd}.workspace-return{background:#eff5ff;color:#195bda;border-color:#d9e6fb}.sidebar .side-label{color:#8495ac}
 
-/* Astra Desk: midnight charcoal, mint, and warm amber. */
+/* Threatloom: midnight charcoal, mint, and warm amber. */
 :root,body,body.light{color-scheme:dark;--bg:#101516;--panel:#192223;--text:#edf5f0;--muted:#a5b9b2;--line:#344744;--accent:#a9edcf;--input:#131c1d}
 body{font-size:16px;background:radial-gradient(ellipse at 90% 0,#20352e70,transparent 52%),var(--bg)}
 body>aside{background:#121b1c;border-right:1px solid var(--line);padding-top:34px}

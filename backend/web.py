@@ -30,7 +30,7 @@ def session_valid(username):
 @app.before_request
 def authorize():
     if request.path=='/health' and request.method=='GET':return
-    if request.path in ('/intel.css','/dashboard.css') and request.method=='GET':return
+    if request.path in ('/intel.css','/dashboard.css','/threatloom.css') and request.method=='GET':return
     if request.path=='/api/cron':
         secret=os.getenv('CRON_SECRET','')
         if len(secret)>=32 and hmac.compare_digest(request.headers.get('Authorization',''),'Bearer '+secret):return
@@ -75,9 +75,9 @@ def health_check():
 def login():
     if request.method=='GET':
         html=(ROOT/'frontend/login.html').read_text(encoding='utf-8')
-        html=html.replace('LOGIN_MESSAGE','Incorrect username or password. Please try again.' if request.args.get('error') else 'Sign in to your Astra Desk research workspace.')
+        html=html.replace('LOGIN_MESSAGE','Incorrect username or password. Please try again.' if request.args.get('error') else 'Sign in to your Threatloom research workspace.')
         if len(os.getenv('APP_PASSWORD',''))<16:
-            html=html.replace('Sign in to your Astra Desk research workspace.','Your workspace is being prepared. Sign-in will be available once setup is complete.')
+            html=html.replace('Sign in to your Threatloom research workspace.','Your workspace is being prepared. Sign-in will be available once setup is complete.')
             html=html.replace('type="submit"','type="submit" disabled')
         return Response(html,mimetype='text/html',headers={'Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"})
     username=os.getenv('APP_USERNAME','admin');password=os.getenv('APP_PASSWORD','')
@@ -102,7 +102,7 @@ class Bridge(Handler):
 def route(path=''):
     if request.method=='GET' and path=='api/assistant/device-script':
         return Response((ROOT/'tools/Collect-SignalDeskCheck.ps1').read_bytes(),mimetype='text/plain',headers={'Content-Disposition':'attachment; filename=Collect-SignalDeskCheck.ps1','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'})
-    if request.method=='GET' and path in ('','laboratory','intel.js','intel.css','dashboard.css','coursework.js','assistant.js','app.js','styles.css','replica-lab.js','exercise9.js'):
+    if request.method=='GET' and path in ('','laboratory','intel.js','intel.css','dashboard.css','threatloom.css','coursework.js','home.js','assistant.js','app.js','styles.css','replica-lab.js','exercise9.js'):
         name=('intel.html' if not path else 'index.html' if path=='laboratory' else path);mime='text/html' if path in ('','laboratory') else 'application/javascript' if path.endswith('.js') else 'text/css'
         return Response((ROOT/'frontend'/name).read_bytes(),mimetype=mime,headers={'Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'",'X-Content-Type-Options':'nosniff'})
     if request.method=='GET' and path=='api/exercise9/kit':

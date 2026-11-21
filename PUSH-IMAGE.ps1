@@ -10,12 +10,12 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 if (-not (Test-Path -LiteralPath $ImageFile)) { throw 'Extract the GitHub Actions docker-image artifact here first.' }
 docker load --input $ImageFile
 if ($LASTEXITCODE -ne 0) { throw 'Image load failed.' }
-docker tag heetamin25/astra-desk:latest "heetamin25/astra-desk:$Version"
+docker tag heetamin25/mongodb-lab18:latest "heetamin25/mongodb-lab18:$Version"
 if ($LASTEXITCODE -ne 0) { throw 'Expected Astra Desk image not found.' }
 docker login --username heetamin25
 if ($LASTEXITCODE -ne 0) { throw 'Docker Hub login failed.' }
-docker push "heetamin25/astra-desk:$Version"
+docker push "heetamin25/mongodb-lab18:$Version"
 if ($LASTEXITCODE -ne 0) { throw 'Version push failed.' }
-docker push heetamin25/astra-desk:latest
+docker push heetamin25/mongodb-lab18:latest
 if ($LASTEXITCODE -ne 0) { throw 'Latest push failed.' }
 Write-Host 'Astra Desk image published to Docker Hub.'

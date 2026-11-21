@@ -42,7 +42,7 @@ jobs:
       - name: Save portable application image
         run: |
           mkdir -p docker-package
-          docker save -o docker-package/astra-desk.tar heetamin25/astra-desk:latest
+          docker save -o docker-package/astra-desk.tar heetamin25/mongodb-lab18:latest
           cp docker-compose.yml docker-compose.pull.yml .env.example README.md PUSH-IMAGE.ps1 docker-package/
       - uses: actions/upload-artifact@v4
         with:

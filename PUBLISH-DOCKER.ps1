@@ -11,10 +11,10 @@ docker info | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Docker engine unavailable.' }
 docker login --username heetamin25
 if ($LASTEXITCODE -ne 0) { throw 'Docker Hub login failed.' }
-docker build --pull --tag "heetamin25/astra-desk:$Version" --tag 'heetamin25/astra-desk:latest' .
+docker build --pull --tag "heetamin25/mongodb-lab18:$Version" --tag 'heetamin25/mongodb-lab18:latest' .
 if ($LASTEXITCODE -ne 0) { throw 'Build failed; nothing pushed.' }
-docker push "heetamin25/astra-desk:$Version"
+docker push "heetamin25/mongodb-lab18:$Version"
 if ($LASTEXITCODE -ne 0) { throw 'Version push failed.' }
-docker push 'heetamin25/astra-desk:latest'
+docker push 'heetamin25/mongodb-lab18:latest'
 if ($LASTEXITCODE -ne 0) { throw 'Latest push failed.' }
-Write-Host "Published heetamin25/astra-desk:$Version and latest. MongoDB runs via the separate official image in Compose."
+Write-Host "Published heetamin25/mongodb-lab18:$Version and latest. MongoDB runs via the separate official image in Compose."

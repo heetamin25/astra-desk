@@ -14,7 +14,7 @@ services:
       timeout: 5s
       retries: 20
   app:
-    image: heetamin25/astra-desk:latest
+    image: heetamin25/mongodb-lab18:latest
     build: .
     restart: unless-stopped
     ports: ['127.0.0.1:8019:8000']
